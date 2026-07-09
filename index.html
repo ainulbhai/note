@@ -246,11 +246,20 @@
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
     <script>
-      window.Telegram.WebApp.ready();
-      const webApp = Telegram.WebApp;
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      
+      if (!tg.initDataUnsafe?.user?.id) {
+      document.body.innerHTML =
+      "<h2 style='color:white;text-align:center;margin-top:100px'>Please open this page from Telegram.</h2>";
+      throw new Error("Open from Telegram only");
+      }
+
+      const USER_ID = tg.initDataUnsafe?.user?.id || "guest";
+      const NOTES_KEY = `notes_${USER_ID}`;
 
       try {
-        webApp.requestFullscreen();
+        tg.requestFullscreen();
       } catch {}
 
       let currentNoteIndex = null;
@@ -271,7 +280,7 @@
         const contentInput = document.getElementById("popupContent");
         const meta = document.getElementById("popupMeta");
         const deleteBtn = document.getElementById("deleteNoteBtn");
-        let notes = JSON.parse(localStorage.getItem("notes")) || [];
+        let notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || [];
 
         currentNoteIndex = index;
         if (index !== null) {
@@ -297,20 +306,20 @@
         const content = document.getElementById("popupContent").value.trim();
         if (!title || !content) return;
 
-        let notes = JSON.parse(localStorage.getItem("notes")) || [];
+        let notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || [];
         const timestamp = new Date().toLocaleString();
 
         currentNoteIndex !== null ? (notes[currentNoteIndex] = { title, content, timestamp }) : notes.unshift({ title, content, timestamp });
 
-        localStorage.setItem("notes", JSON.stringify(notes));
+        localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
         closePopup();
         renderNotes();
       }
 
       function deleteNote(index) {
-        let notes = JSON.parse(localStorage.getItem("notes")) || [];
+        let notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || [];
         notes.splice(index, 1);
-        localStorage.setItem("notes", JSON.stringify(notes));
+        localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
         closePopup();
         renderNotes();
       }
@@ -334,7 +343,7 @@
       function renderNotes() {
         const notesContainer = document.getElementById("notesContainer");
         const noNotesContainer = document.getElementById("noNotesContainer");
-        let notes = JSON.parse(localStorage.getItem("notes")) || [];
+        let notes = JSON.parse(localStorage.getItem(NOTES_KEY)) || [];
 
         if (notes.length === 0) {
           noNotesContainer.classList.remove("hidden");
